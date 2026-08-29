@@ -66,10 +66,10 @@
 
         /* Screen state displays */
         .screen {
-            display: none;
+            display: none; /* Hides elements completely when active-screen is not present */
         }
         .active-screen {
-            display: block;
+            display: block; /* Shows elements when active */
         }
 
         /* Card Base Styles */
@@ -376,7 +376,7 @@
 
     <div class="main-container">
         
-        <!-- Welcome Landing Screen -->
+        <!-- Welcome Landing Screen (Now includes "screen" helper class to disappear properly) -->
         <div id="landing-screen" class="card screen active-screen">
             <h1>Welcome to your Practice Test</h1>
             <p>This practice exam features realistic multiple-choice Mathematical Reasoning questions designed to simulate the Year 4 Opportunity Class Placement Test. You will have <strong>40 minutes</strong> to complete the 35 questions.</p>
@@ -458,6 +458,7 @@
         let secondsLeft = 40 * 60; // 40 minutes in seconds
 
         function startTest() {
+            // Landing screen now has "screen" class, so removing active-screen hides it cleanly
             document.getElementById('landing-screen').classList.remove('active-screen');
             document.getElementById('test-screen').classList.add('active-screen');
             document.getElementById('timer').style.visibility = 'visible';
