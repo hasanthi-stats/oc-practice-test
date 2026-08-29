@@ -1,1 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OC Mathematical Reasoning Practice Portal</title>
+    <style>
+        :root {
+            --primary-color: #0070c0;
+            --primary-hover: #005694;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #cccccc;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        /* Top Bar with Timer strictly placed on Top-Left */
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: var(--card-bg);
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .timer-box {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--danger-color);
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 8px 15px;
+            border-radius: 5px;
+            visibility: hidden; /* Hidden until "Open Test" is clicked */
+        }
+
+        .portal-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* Main Container centered with 1200px boundary limit */
+        .main-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* Screen state displays */
+        .screen {
+            display: none;
+        }
+        .active-screen {
+            display: block;
+        }
+
+        /* Card Base Styles */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Short Question Layout (occupies exactly the Left Half of the screen) */
+        .layout-short {
+            max-width: 580px;
+            width: 100%;
+            margin: 20px auto 20px 0; /* Align perfectly to the left */
+        }
+
+        /* Split (Long) Question Layout (50/50 split with a vertical line) */
+        .layout-split {
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            gap: 35px;
+            align-items: stretch;
+        }
+
+        /* Middle Vertical Line */
+        .split-divider {
+            background-color: var(--border-color);
+            width: 2px;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Collapse / Expand slider button on the vertical line (simulating real exam UI) */
+        .split-divider::after {
+            content: "◀ ▶";
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #777;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 6px 3px;
+            position: absolute;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Split Panels */
+        .split-left {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .split-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .short-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Welcome Landing Screen */
+        #landing-screen {
+            text-align: center;
+            max-width: 800px;
+            margin: 40px auto;
+        }
+        #landing-screen h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        #landing-screen p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* Progress Tracker */
+        .q-progress {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        /* Question Text Elements */
+        .q-text, .stimulus-content {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .directed-question {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Digit Cards visual stylings to simulate the fig1.png attachment */
+        .cards-visual {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 25px 0;
+        }
+        .card-circle {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #555;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            background-color: #fffdf6;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        /* Answers listed down one by one */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .option-card:hover {
+            background-color: #f8f9fa;
+            border-color: #999;
+        }
+
+        .option-card.selected {
+            border-color: var(--primary-color);
+            background-color: #e7f1ff;
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+
+        .option-card input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+
+        .option-text {
+            font-size: 1.05rem;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        /* Test Navigation Controls */
+        .nav-btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-start {
+            background-color: var(--success-color);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+        }
+        .btn-start:hover {
+            background-color: #218838;
+        }
+
+        .btn-nav {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-nav:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-disabled {
+            background-color: #e9ecef;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .btn-disabled:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Results Screen Styles */
+        #results-screen {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+        #results-screen h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #e7f1ff;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 20px auto;
+            border: 5px solid var(--primary-color);
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .summary-table th, .summary-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-table th {
+            background-color: #f8f9fa;
+        }
+
+        .status-correct {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .status-incorrect {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        /* Responsive Mobile Layout (grids collapse into single vertical blocks) */
+        @media (max-width: 768px) {
+            .layout-split {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .split-divider {
+                display: none;
+            }
+            .layout-short {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <!-- Strictly Floating Top-Left Countdown Timer -->
+        <div id="timer" class="timer-box">Time Remaining: 40:00</div>
+        <div class="portal-title">OC Mathematical Reasoning Practice Portal</div>
+    </div>
+
+    <div class="main-container">
+        
+        <!-- Welcome Landing Screen -->
+        <div id="landing-screen" class="card active-screen">
+            <h1>Welcome to your Practice Test</h1>
+            <p>This practice exam features realistic multiple-choice Mathematical Reasoning questions designed to simulate the Year 4 Opportunity Class Placement Test. You will have <strong>40 minutes</strong> to complete the 35 questions.</p>
+            <p>Once you click <strong>Open Test</strong>, the timer will begin. If time runs out, your selected answers will be submitted automatically. No calculators are permitted.</p>
+            <button class="btn btn-start" onclick="startTest()">Open Test</button>
+        </div>
+
+        <!-- Active Test Screen -->
+        <div id="test-screen" class="screen">
+            <div id="question-card">
+                <!-- Dynamically populated short or split layout card -->
+            </div>
+        </div>
+
+        <!-- Summary Results Screen -->
+        <div id="results-screen" class="card screen">
+            <h2>Test Completed</h2>
+            <div class="score-circle" id="score-text">0 / 0</div>
+            <p style="text-align: center;">Review your results below. Understanding your pacing and checking mistakes is key to mastering the computer-based exam format.</p>
+            <div style="overflow-x: auto;">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Your Answer</th>
+                            <th>Correct Answer</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Array of practice questions
+        // Setting 'type: "short"' aligns the question card strictly to the left half.
+        // Setting 'type: "long"' triggers the split-panel design with a divider down the center.
+        const questions = [
+            {
+                type: "short",
+                text: "An item has its price decreased by 26%. By what percentage should the price be increased to recover the original price?",
+                options: ["35 5/37 %", "16 12/43 %", "28 8/39 %", "26 %", "38 8/9 %"],
+                correctAnswer: "A"
+            },
+            {
+                type: "long", // Simulating the visual split-screen question from fig1.png
+                stimulus: `
+                    <p>Here are three cards showing digits made of horizontal and vertical lines:</p>
+                    <div class="cards-visual">
+                        <div class="card-circle">4</div>
+                        <div class="card-circle">5</div>
+                        <div class="card-circle">6</div>
+                    </div>
+                `,
+                directedQuestion: "If you choose two different cards, what is the largest possible number of right angles you can count in your digits?",
+                options: ["7", "8", "9", "10", "11"],
+                correctAnswer: "D" // Correct answer is 10 (Cards 5 and 6 have 5 right angles each)
+            },
+            {
+                type: "short",
+                text: "There are two items. The second weighs 12 times as much as the first. If the total weight is 1716, what is the weight of the lighter item?",
+                options: ["1584", "132", "37", "121", "143"],
+                correctAnswer: "B"
+            },
+            {
+                type: "short",
+                text: "What is the area of a rectangle given its perimeter is 34 and one of its side lengths is 10?",
+                options: ["7", "40", "75", "70", "74"],
+                correctAnswer: "D" // Other side is 7 (10 + 10 + 7 + 7 = 34); Area = 10 * 7 = 70
+            }
+        ];
+
+        let currentQ = 0;
+        let userAnswers = Array(questions.length).fill(null);
+        let timer;
+        let secondsLeft = 40 * 60; // 40 minutes in seconds
+
+        function startTest() {
+            document.getElementById('landing-screen').classList.remove('active-screen');
+            document.getElementById('test-screen').classList.add('active-screen');
+            document.getElementById('timer').style.visibility = 'visible';
+            loadQuestion(0);
+            startTimer();
+        }
+
+        function loadQuestion(index) {
+            currentQ = index;
+            const q = questions[index];
+            const cardContainer = document.getElementById('question-card');
+            
+            if (q.type === 'long') {
+                // Split Screen Layout for long questions
+                cardContainer.className = "card layout-split";
+                cardContainer.innerHTML = `
+                    <div class="split-left">
+                        <div class="q-progress">Question ${index + 1} of ${questions.length}</div>
+                        <div class="stimulus-content">${q.stimulus}</div>
+                    </div>
+                    <div class="split-divider"></div>
+                    <div class="split-right">
+                        <div>
+                            <div class="directed-question">${q.directedQuestion}</div>
+                            <div class="options-container">
+                                ${getOptionsHtml(index)}
+                            </div>
+                        </div>
+                        <div class="nav-btn-container">
+                            <button id="back-btn" class="btn btn-secondary" onclick="prevPage()">Back</button>
+                            <button id="next-btn" class="btn btn-nav" onclick="nextPage()">Next</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Short Question Layout (aligned strictly to left half of screen)
+                cardContainer.className = "card layout-short";
+                cardContainer.innerHTML = `
+                    <div class="short-content">
+                        <div class="q-progress">Question ${index + 1} of ${questions.length}</div>
+                        <div class="q-text">${q.text}</div>
+                        <div class="options-container">
+                            ${getOptionsHtml(index)}
+                        </div>
+                        <div class="nav-btn-container">
+                            <button id="back-btn" class="btn btn-secondary" onclick="prevPage()">Back</button>
+                            <button id="next-btn" class="btn btn-nav" onclick="nextPage()">Next</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateButtonStates(index);
+        }
+
+        function getOptionsHtml(index) {
+            const q = questions[index];
+            const letters = ["A", "B", "C", "D", "E"];
+            return q.options.map((opt, i) => {
+                const letter = letters[i];
+                const isSelected = userAnswers[index] === letter;
+                return `
+                    <div class="option-card ${isSelected ? 'selected' : ''}" onclick="selectOption('${letter}')">
+                        <input type="radio" name="options" id="opt-${letter}" value="${letter}" ${isSelected ? 'checked' : ''}>
+                        <label for="opt-${letter}" class="option-text"><strong>${letter}:</strong> ${opt}</label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectOption(letter) {
+            userAnswers[currentQ] = letter;
+            // Immediate, smooth selected style toggle without full card redraw
+            const cards = document.querySelectorAll('.option-card');
+            const letters = ["A", "B", "C", "D", "E"];
+            cards.forEach((card, i) => {
+                const currentLetter = letters[i];
+                const radio = card.querySelector('input[type="radio"]');
+                if (currentLetter === letter) {
+                    card.classList.add('selected');
+                    if (radio) radio.checked = true;
+                } else {
+                    card.classList.remove('selected');
+                    if (radio) radio.checked = false;
+                }
+            });
+        }
+
+        function nextPage() {
+            if (currentQ < questions.length - 1) {
+                loadQuestion(currentQ + 1);
+            }
+        }
+
+        function prevPage() {
+            if (currentQ > 0) {
+                loadQuestion(currentQ - 1);
+            }
+        }
+
+        function updateButtonStates(index) {
+            const backBtn = document.getElementById('back-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            if (index === 0) {
+                backBtn.classList.add('btn-disabled');
+                backBtn.disabled = true;
+            } else {
+                backBtn.classList.remove('btn-disabled');
+                backBtn.disabled = false;
+            }
+
+            if (index === questions.length - 1) {
+                nextBtn.innerText = "Submit Test";
+                nextBtn.onclick = submitTest;
+            } else {
+                nextBtn.innerText = "Next";
+                nextBtn.onclick = nextPage;
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                secondsLeft--;
+                updateTimerDisplay();
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    alert("Time is up! Your answers have been automatically submitted.");
+                    submitTest();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            document.getElementById('timer').innerText = `Time Remaining: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function submitTest() {
+            clearInterval(timer);
+            document.getElementById('test-screen').classList.remove('active-screen');
+            document.getElementById('results-screen').classList.add('active-screen');
+            document.getElementById('timer').style.visibility = 'hidden';
+            
+            let score = 0;
+            let summaryHtml = '';
+            questions.forEach((q, idx) => {
+                const userAns = userAnswers[idx];
+                const isCorrect = userAns === q.correctAnswer;
+                if (isCorrect) score++;
+                
+                summaryHtml += `
+                    <tr>
+                        <td>Question ${idx + 1}</td>
+                        <td>${userAns || 'No Answer'}</td>
+                        <td>${q.correctAnswer}</td>
+                        <td class="${isCorrect ? 'status-correct' : 'status-incorrect'}">${isCorrect ? 'Correct' : 'Incorrect'}</td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('score-text').innerText = `${score} / ${questions.length}`;
+            document.getElementById('summary-body').innerHTML = summaryHtml;
+        }
+    </script>
+</body>
+</html>
