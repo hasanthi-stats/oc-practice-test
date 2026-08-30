@@ -83,6 +83,45 @@
             transition: all 0.3s ease;
         }
 
+        /* Access Control Screen Styles */
+        #auth-screen {
+            max-width: 500px;
+            margin: 60px auto;
+            text-align: center;
+        }
+        #auth-screen h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .auth-container {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .code-input {
+            font-size: 2rem;
+            letter-spacing: 8px;
+            text-align: center;
+            width: 220px;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            font-family: monospace;
+            transition: border-color 0.2s;
+        }
+        .code-input:focus {
+            border-color: var(--primary-color);
+        }
+        .error-message {
+            color: var(--danger-color);
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: none; /* Hidden by default */
+        }
+
         /* Short Question Layout (occupies exactly the Left Half of the screen) */
         .layout-short {
             max-width: 580px;
@@ -376,8 +415,19 @@
 
     <div class="main-container">
         
-        <!-- Welcome Landing Screen (Now includes "screen" helper class to disappear properly) -->
-        <div id="landing-screen" class="card screen active-screen">
+        <!-- Access Gate Screen (First visible component) -->
+        <div id="auth-screen" class="card screen active-screen">
+            <h2>Access Practice Portal</h2>
+            <p>This page is locked. Enter the 6-digit passcode provided by your tutor to open the test environment.</p>
+            <div class="auth-container">
+                <input type="text" id="passcode-field" class="code-input" maxlength="6" placeholder="000000" onkeydown="handleEnterKey(event)">
+                <div id="auth-error" class="error-message">Incorrect passcode. Please check and try again.</div>
+                <button class="btn btn-nav" onclick="verifyPasscode()">Unlock Portal</button>
+            </div>
+        </div>
+
+        <!-- Welcome Landing Screen (Visible only after typing the correct passcode) -->
+        <div id="landing-screen" class="card screen">
             <h1>Welcome to your Practice Test</h1>
             <p>This practice exam features realistic multiple-choice Mathematical Reasoning questions designed to simulate the Year 4 Opportunity Class Placement Test. You will have <strong>40 minutes</strong> to complete the 35 questions.</p>
             <p>Once you click <strong>Open Test</strong>, the timer will begin. If time runs out, your selected answers will be submitted automatically. No calculators are permitted.</p>
@@ -457,8 +507,31 @@
         let timer;
         let secondsLeft = 40 * 60; // 40 minutes in seconds
 
+        // Code Access Gate Verification
+        function verifyPasscode() {
+            const inputVal = document.getElementById('passcode-field').value.trim();
+            const errorMsg = document.getElementById('auth-error');
+            
+            if (inputVal === '123456') {
+                errorMsg.style.display = 'none';
+                // Switch screen cleanly
+                document.getElementById('auth-screen').classList.remove('active-screen');
+                document.getElementById('landing-screen').classList.add('active-screen');
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('passcode-field').value = '';
+                document.getElementById('passcode-field').focus();
+            }
+        }
+
+        // Support pressing Enter key in the passcode field
+        function handleEnterKey(event) {
+            if (event.key === 'Enter') {
+                verifyPasscode();
+            }
+        }
+
         function startTest() {
-            // Landing screen now has "screen" class, so removing active-screen hides it cleanly
             document.getElementById('landing-screen').classList.remove('active-screen');
             document.getElementById('test-screen').classList.add('active-screen');
             document.getElementById('timer').style.visibility = 'visible';
